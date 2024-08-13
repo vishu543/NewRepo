@@ -12,6 +12,7 @@ validate(){
 
  if [$ID -ne 0 ]
     echo "please log in as root to install sql"
+    exit 1
 else
    echo " you are root user"
 fi
