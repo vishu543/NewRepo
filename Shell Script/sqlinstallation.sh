@@ -1,4 +1,7 @@
 ID=$(id -u)
+Timestamp=$(date+%F-%H-%M-%S)
+Logfile="tmp/$0-$Timestamp.log"
+echo "Script executed time $Timestamp" &>> $Logile
 validate(){
 
     if [ $? -ne 0 ]
@@ -16,8 +19,18 @@ validate(){
 else
    echo " you are root user"
 fi
+for package in $@
+do
+yum list installed $package
+if [$? -ne 0 ]
+then
+    echo "Installing the package"
+    validate()
+else
+    echo "Skip the installation"
+fi
 
-yum install sql -y
-validate $? "Installing SQL"
-yum install git -y
-validate $? "Installing Git"
+done
+
+
+
