@@ -1,0 +1,77 @@
+- name: Shipping application
+  hosts: mongodb
+  become: yes
+  tasks: 
+
+- name: Installing application
+  ansible.builtin.dnf:
+    name: maven
+    state: present
+
+- name: create an user
+  ansible.builtin.user:
+    name: roboshop
+
+- name: delete the directory recursively
+  ansible.builtin.file:
+    path: /app
+    state: absent
+
+- name: create app directory
+  ansible.builtin.file:
+    path: /app
+    state: directory
+
+- name: dowload the catalogue server
+  ansible.builtin.get_url:
+    url: https://roboshot-builds.s3.amazon.aws.com/catalogue.zip
+    dest: /tmp
+
+- name: unarchiving the application
+  ansible.builtin.unarchive:
+    src: /tmp/shipping.zip
+    dest: /app
+    remote_src: yes
+
+- name: Installing dependencies
+  ansible.builtin.command: mvn clean package
+    args:
+      chdir: /app
+
+- name: renaming the app
+  ansible.buitin.command: mv target/shipping-1.0.jar shipping.jar
+    args:
+      chdir: /app
+
+- name: copying the service
+  ansible.builtin.copy: 
+    src: shipping.service
+    dest: /etc/systemd/system/shipping.service
+
+- name: reload the service
+  ansible.builtin.systemd_service:
+    daemon_reload: true
+
+- name: install Mysql
+  ansible.builtin.dnf:
+    name: mysql
+    state: present
+
+- name: city schema
+  ansible.buitin.command: mysql -h sqlIP -uroot -p{{mysql_password}} -sN -e "Select count(*) from INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME= 'CITIES"
+    register: schema
+
+- name: print output
+  ansible.buitin.debug
+    msg: "schema output" {{schema}}
+
+- name: load the city schema data
+  ansible.builtin.command: mysql -h mysqlIp -uroot -pRoboshop@1 < /app/schema/shipping.sql
+  when: schema.stdout == "0"
+
+- name: restart the service
+  ansible.builtin.service:
+    state: restarted
+    enabled: yes
+    
+
