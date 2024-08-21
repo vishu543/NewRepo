@@ -1,4 +1,4 @@
-- name: "install{{component}}"
+- name: "install {{component}}"
   hosts: "{{component}}"
   become: yes
   roles:
